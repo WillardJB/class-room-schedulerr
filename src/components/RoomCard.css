@@ -1,0 +1,54 @@
+/* src/components/RoomCard.css */
+.room-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease;
+    width: 100%;
+    max-width: 300px;
+    margin: 10px;
+  }
+  
+  .room-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .room-card h3 {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+  }
+  
+  .room-card p {
+    font-size: 1rem;
+    color: #777;
+  }
+  
+  .room-card button {
+    padding: 10px 20px;
+    font-size: 1rem;
+  }
+  
+  /* Mobile-first */
+  @media (max-width: 768px) {
+    .room-card {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+  }
+  
+  /* Tablet */
+  @media (min-width: 769px) {
+    .room-card {
+      width: 48%;
+    }
+  }
+  
+  /* Desktop */
+  @media (min-width: 1024px) {
+    .room-card {
+      width: 30%;
+    }
+  }
+  

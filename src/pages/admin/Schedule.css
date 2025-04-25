@@ -1,0 +1,62 @@
+/* src/pages/admin/Schedule.css */
+
+/* Title for the schedule page */
+.schedule-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 20px;
+  }
+  
+  /* Schedule container */
+  .schedule-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  
+  /* Individual schedule item */
+  .schedule-item {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .schedule-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .schedule-item h3 {
+    font-size: 22px;
+    font-weight: bold;
+    color: #3498db;
+    margin-bottom: 15px;
+  }
+  
+  .schedule-item p {
+    font-size: 18px;
+    color: #34495e;
+  }
+  
+  .schedule-item .schedule-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+  
+  .schedule-actions button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .schedule-actions button:hover {
+    background-color: #2980b9;
+  }
+  

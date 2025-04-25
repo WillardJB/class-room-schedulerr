@@ -1,0 +1,39 @@
+/* src/pages/Home.css */
+.home {
+    padding: 20px;
+  }
+  
+  .home h1 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+  }
+  
+  /* Mobile-first: Single column */
+  .room-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    justify-items: center;
+  }
+  
+  @media (max-width: 768px) {
+    .home h1 {
+      font-size: 2rem;
+    }
+  }
+  
+  /* Tablet: Two columns */
+  @media (min-width: 769px) {
+    .room-list {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  
+  /* Desktop: Three or more columns */
+  @media (min-width: 1024px) {
+    .room-list {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+  }
+  

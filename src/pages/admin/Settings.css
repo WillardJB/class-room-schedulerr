@@ -1,0 +1,49 @@
+/* src/pages/admin/Settings.css */
+
+/* Title for the settings page */
+.settings-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 20px;
+  }
+  
+  /* Form styles */
+  .settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .settings-form label {
+    font-size: 18px;
+    color: #2c3e50;
+  }
+  
+  .settings-form input,
+  .settings-form select,
+  .settings-form textarea {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    width: 100%;
+  }
+  
+  .settings-form input[type="checkbox"] {
+    width: auto;
+  }
+  
+  .settings-form button {
+    background-color: #3498db;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .settings-form button:hover {
+    background-color: #2980b9;
+  }
+  
