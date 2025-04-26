@@ -1,236 +1,286 @@
-// src/pages/admin/Rooms.tsx
+import React, { useState } from 'react';
+import './rooms.css';
 
-import { useEffect, useState } from 'react';
-import './Rooms.css';
+type RoomStatus = 'Ongoing' | 'Available';
 
-interface Room {
-  id: string;
+type Room = {
+  id: number;
   name: string;
-  description: string;
-  currentClass?: {
-    subject?: string;
-    professor: string;
-    startTime: string;
-    endTime: string;
-    isOngoing: boolean;
-  };
-}
+  status: RoomStatus;
+  time: string;
+  professor: string;
+  className: string;
+};
 
 const Rooms = () => {
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [newRoom, setNewRoom] = useState<Room>({
-    id: '',
-    name: '',
-    description: '',
-    currentClass: {
-      professor: '',
-      startTime: '',
-      endTime: '',
-      isOngoing: false,
+  const [rooms, setRooms] = useState<Room[]>([
+    {
+      id: 1,
+      name: 'Room 101',
+      status: 'Ongoing',
+      time: '08:00 - 09:30',
+      professor: 'Dr. Alice Smith',
+      className: 'Computer Science 101',
     },
-  });
+    {
+      id: 2,
+      name: 'Room 102',
+      status: 'Available',
+      time: '',
+      professor: '',
+      className: '',
+    },
+  ]);
+
+  const [filter, setFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'Add' | 'Edit'>('Add');
+  const [currentRoom, setCurrentRoom] = useState<Room>({
+    id: 0,
+    name: '',
+    status: 'Available',
+    time: '',
+    professor: '',
+    className: '',
+  });
+  const [successMessage, setSuccessMessage] = useState('');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchedRooms: Room[] = [
-      {
-        id: '1',
-        name: 'Room A101',
-        description: 'Lecture room with 30 seats.',
-        currentClass: {
-          subject: 'Computer Science 101',
-          professor: 'Dr. Alice Smith',
-          startTime: '08:00 AM',
-          endTime: '09:30 AM',
-          isOngoing: true,
-        },
-      },
-      {
-        id: '2',
-        name: 'Room B205',
-        description: 'Workshop room for practicals.',
-        currentClass: {
-          subject: 'Physics Lab',
-          professor: 'Prof. Henry Lee',
-          startTime: '10:00 AM',
-          endTime: '11:30 AM',
-          isOngoing: false,
-        },
-      },
-      {
-        id: '3',
-        name: 'Room C301',
-        description: 'Vacant meeting room.',
-      },
-    ];
-    setRooms(fetchedRooms);
-  }, []);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setNewRoom((prev) => ({ ...prev, [name]: value }));
+  // Function to open Add Modal
+  const openAddModal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => {
+      setModalMode('Add');
+      setCurrentRoom({
+        id: 0,
+        name: '',
+        status: 'Available',
+        time: '',
+        professor: '',
+        className: '',
+      });
+      setIsModalOpen(true);
+    }, 100);
   };
 
-  const handleClassChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewRoom((prev) => {
-      if (prev.currentClass) {
-        return {
-          ...prev,
-          currentClass: { ...prev.currentClass, [name]: value },
-        };
-      } else {
-        return {
-          ...prev,
-          currentClass: {
-            professor: '',
-            startTime: '',
-            endTime: '',
-            isOngoing: false,
-            [name]: value,
-          },
-        };
-      }
+  // Function to open Edit Modal
+  const openEditModal = (room: Room) => {
+    setIsModalOpen(false);
+    setTimeout(() => {
+      setModalMode('Edit');
+      setCurrentRoom(room);
+      setIsModalOpen(true);
+    }, 100);
+  };
+
+  // Function to handle Save or Update
+  const handleSave = () => {
+    if (currentRoom.name.trim() === '') return;
+
+    if (modalMode === 'Add') {
+      const newRoom: Room = { ...currentRoom, id: Date.now() };
+      setRooms((prevRooms) => [...prevRooms, newRoom]);
+      setSuccessMessage('✅ Room added successfully!');
+    } else {
+      setRooms((prevRooms) =>
+        prevRooms.map((room) =>
+          room.id === currentRoom.id ? currentRoom : room
+        )
+      );
+      setSuccessMessage('✅ Room updated successfully!');
+    }
+
+    setIsModalOpen(false);
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  // Function to open delete confirmation modal
+  const openDeleteModal = (roomId: number) => {
+    setIsDeleteModalOpen(true);
+    setCurrentRoom(rooms.find(room => room.id === roomId) || {
+      id: 0,
+      name: '',
+      status: 'Available',
+      time: '',
+      professor: '',
+      className: '',
     });
   };
 
-  const addRoom = () => {
-    if (newRoom.name && newRoom.description) {
-      setRooms([
-        ...rooms,
-        {
-          ...newRoom,
-          id: (rooms.length + 1).toString(),
-        },
-      ]);
-      setNewRoom({
-        id: '',
-        name: '',
-        description: '',
-        currentClass: {
-          professor: '',
-          startTime: '',
-          endTime: '',
-          isOngoing: false,
-        },
-      });
-      setIsModalOpen(false);
+  // Function to handle Delete
+  const handleDelete = () => {
+    if (window.confirm('Are you sure you want to delete this room?')) {
+      setRooms((prevRooms) => prevRooms.filter((room) => room.id !== currentRoom.id));
+      setSuccessMessage('🗑️ Room deleted successfully!');
+      setIsDeleteModalOpen(false);
+      setTimeout(() => setSuccessMessage(''), 3000);
     }
   };
 
-  const deleteRoom = (id: string) => {
-    setRooms(rooms.filter((room) => room.id !== id));
-  };
+  // Filter rooms based on search input
+  const filteredRooms = rooms.filter((room) =>
+    room.name.toLowerCase().includes(filter.toLowerCase())
+  );
 
   return (
-    <main className="min-h-screen bg-gray-100 py-12">
-      <div className="container mx-auto relative">
-        <h1 className="rooms-title">Rooms</h1>
+    <div className="rooms-container">
+      <div className="rooms-header">
+        <h2>📚 Manage Rooms</h2>
 
-        {/* Add Room Button */}
-        <button className="add-room-button" onClick={() => setIsModalOpen(true)}>
-          + Add Room
-        </button>
+        <div className="rooms-actions">
+          <input
+            type="text"
+            placeholder="🔍 Search room name..."
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+          <button className="add-btn" onClick={openAddModal}>
+            ➕ Add Room
+          </button>
+        </div>
+      </div>
 
-        {/* Modal */}
-        {isModalOpen && (
-          <div className="modal">
-            <div className="modal-content">
-              <h2>Add New Room</h2>
-              <input
-                type="text"
-                name="name"
-                placeholder="Room Name"
-                value={newRoom.name}
-                onChange={handleInputChange}
-              />
-              <textarea
-                name="description"
-                placeholder="Room Description"
-                value={newRoom.description}
-                onChange={handleInputChange}
-              />
-              {/* Ongoing Class Information */}
-              <input
-                type="text"
-                name="professor"
-                placeholder="Professor Name"
-                value={newRoom.currentClass?.professor || ''}
-                onChange={handleClassChange}
-              />
-              <input
-                type="text"
-                name="subject"
-                placeholder="Class Name"
-                value={newRoom.currentClass?.subject || ''}
-                onChange={handleClassChange}
-              />
-              <input
-                type="time"
-                name="startTime"
-                value={newRoom.currentClass?.startTime || ''}
-                onChange={handleClassChange}
-              />
-              <input
-                type="time"
-                name="endTime"
-                value={newRoom.currentClass?.endTime || ''}
-                onChange={handleClassChange}
-              />
+      {successMessage && <div className="success-message">{successMessage}</div>}
 
-              <div className="modal-footer">
-                <button style={{ backgroundColor: '#4CAF50', color: 'white' }} onClick={addRoom}>
-                  Add Room
-                </button>
-                <button
-                  style={{ backgroundColor: '#e74c3c', color: 'white' }}
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Room List */}
-        <div className="room-list">
-          {rooms.map((room) => (
+      <div className="rooms-grid">
+        {filteredRooms.length > 0 ? (
+          filteredRooms.map((room) => (
             <div key={room.id} className="room-card">
-              <h3>{room.name}</h3>
-              <p>{room.description}</p>
+              <div className="room-title">
+                <h3>{room.name}</h3>
+                <span
+                  className={`status-badge ${room.status === 'Ongoing' ? 'ongoing' : 'available'}`}
+                >
+                  {room.status}
+                </span>
+              </div>
 
-              {room.currentClass ? (
-                <div className="status-box">
-                  <p>
-                    🔴 <strong>Status:</strong>{' '}
-                    {room.currentClass.isOngoing ? 'Ongoing' : 'Available'}
-                  </p>
-                  <p>
-                    ⏰ <strong>Time:</strong> {room.currentClass.startTime} - {room.currentClass.endTime}
-                  </p>
-                  <p>
-                    👨‍🏫 <strong>Professor:</strong> {room.currentClass.professor}
-                  </p>
-                  {room.currentClass.subject && (
-                    <p>
-                      📘 <strong>Class:</strong> {room.currentClass.subject}
-                    </p>
-                  )}
+              {room.status === 'Ongoing' && (
+                <div className="room-details">
+                  <p>⏰ Time: {room.time}</p>
+                  <p>👨‍🏫 Professor: {room.professor}</p>
+                  <p>📘 Class: {room.className}</p>
                 </div>
-              ) : (
-                <p className="text-green-600 font-medium mt-4">✅ Available</p>
               )}
 
               <div className="room-actions">
-                <button>View Details</button>
-                <button onClick={() => deleteRoom(room.id)}>Delete</button>
+                <button className="edit-btn" onClick={() => openEditModal(room)}>
+                  ✏️ Edit
+                </button>
+                <button className="delete-btn" onClick={() => openDeleteModal(room.id)}>
+                  🗑️ Delete
+                </button>
               </div>
             </div>
-          ))}
-        </div>
+          ))
+        ) : (
+          <p className="no-results">No rooms found.</p>
+        )}
       </div>
-    </main>
+
+      {/* Modal for Add/Edit */}
+      {isModalOpen && (
+        <div className="modal-backdrop show">
+          <div className="modal">
+            <span
+              className="modal-close"
+              onClick={() => setIsModalOpen(false)}
+              role="button"
+              aria-label="Close Modal"
+            >
+              ❌
+            </span>
+
+            <h3>{modalMode === 'Add' ? 'Add New Room' : 'Edit Room'}</h3>
+
+            <input
+              type="text"
+              placeholder="Room Name"
+              value={currentRoom.name}
+              onChange={(e) =>
+                setCurrentRoom({ ...currentRoom, name: e.target.value })
+              }
+            />
+
+            <select
+              value={currentRoom.status}
+              onChange={(e) =>
+                setCurrentRoom({ ...currentRoom, status: e.target.value as RoomStatus })
+              }
+            >
+              <option value="Available">Available</option>
+              <option value="Ongoing">Ongoing</option>
+            </select>
+
+            {currentRoom.status === 'Ongoing' && (
+              <>
+                <input
+                  type="text"
+                  placeholder="Time (e.g., 08:00 - 09:30)"
+                  value={currentRoom.time}
+                  onChange={(e) =>
+                    setCurrentRoom({ ...currentRoom, time: e.target.value })
+                  }
+                />
+                <input
+                  type="text"
+                  placeholder="Professor Name"
+                  value={currentRoom.professor}
+                  onChange={(e) =>
+                    setCurrentRoom({ ...currentRoom, professor: e.target.value })
+                  }
+                />
+                <input
+                  type="text"
+                  placeholder="Class Name"
+                  value={currentRoom.className}
+                  onChange={(e) =>
+                    setCurrentRoom({ ...currentRoom, className: e.target.value })
+                  }
+                />
+              </>
+            )}
+
+            <div className="modal-buttons">
+              <button className="confirm-btn" onClick={handleSave}>
+                ✅ {modalMode === 'Add' ? 'Add' : 'Save'}
+              </button>
+              <button className="cancel-btn" onClick={() => setIsModalOpen(false)}>
+                ❌ Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="modal-backdrop show">
+          <div className="modal">
+            <span
+              className="modal-close"
+              onClick={() => setIsDeleteModalOpen(false)}
+              role="button"
+              aria-label="Close Modal"
+            >
+              ❌
+            </span>
+
+            <h3>Are you sure you want to delete this room?</h3>
+            <p>{currentRoom.name}</p>
+
+            <div className="modal-buttons">
+              <button className="confirm-btn" onClick={handleDelete}>
+                ✅ Yes, Delete
+              </button>
+              <button className="cancel-btn" onClick={() => setIsDeleteModalOpen(false)}>
+                ❌ Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

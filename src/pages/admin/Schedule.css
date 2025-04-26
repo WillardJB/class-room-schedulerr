@@ -59,4 +59,50 @@
   .schedule-actions button:hover {
     background-color: #2980b9;
   }
+  /* Search input and filter select styling */
+.search-input,
+.filter-select {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  width: 200px;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.close-modal-btn,
+.book-modal-btn {
+  background-color: #3498db;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  border: none;
+}
+
+.close-modal-btn:hover,
+.book-modal-btn:hover {
+  background-color: #2980b9;
+}
+
   

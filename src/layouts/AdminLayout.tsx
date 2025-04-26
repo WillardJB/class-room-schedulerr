@@ -1,19 +1,35 @@
-// src/layouts/AdminLayout.tsx
-import { Link, Outlet } from 'react-router-dom';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTachometerAlt, faDoorOpen, faChalkboardTeacher, faCalendarAlt, faCog, faSignOutAlt, faUsers } from '@fortawesome/free-solid-svg-icons';
-import NotificationBell from '../components/NotificationBell'; // Import the NotificationBell component
+import NotificationBell from '../components/NotificationBell';
 import './AdminLayout.css';
 import { useState } from 'react';
 
 const AdminLayout = () => {
-  const [unreadNotifications, setUnreadNotifications] = useState(3); // Example unread count
+  const navigate = useNavigate();
+  const [unreadNotifications, setUnreadNotifications] = useState(3);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleBellClick = () => {
-    // Logic to show notifications
     console.log('Bell clicked!');
-    // You can also reset the unread count here if needed
     setUnreadNotifications(0);
+  };
+
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    setLoggingOut(true);
+    setTimeout(() => {
+      setLoggingOut(false);
+      navigate('/'); // Redirect to login or home page
+    }, 3000);
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   return (
@@ -51,12 +67,12 @@ const AdminLayout = () => {
           </li>
           <li>
             <Link to="/admin/users">
-              <FontAwesomeIcon icon={faUsers} /> Users 
+              <FontAwesomeIcon icon={faUsers} /> Users
             </Link>
           </li>
         </ul>
         <div className="logout-button">
-          <button>
+          <button onClick={handleLogoutClick}>
             <FontAwesomeIcon icon={faSignOutAlt} /> Logout
           </button>
         </div>
@@ -69,16 +85,13 @@ const AdminLayout = () => {
           <h1>Admin Dashboard</h1>
           <div className="header-right">
             <div className="notification-bell-container">
-              <NotificationBell 
-                unreadCount={unreadNotifications} 
-                onClick={handleBellClick} 
-              />
+              <NotificationBell unreadCount={unreadNotifications} onClick={handleBellClick} />
             </div>
             <div className="profile-dropdown">
               <button className="profile-btn">Profile</button>
               <div className="dropdown-content">
                 <Link to="/admin/settings">Settings</Link>
-                <button>Logout</button>
+                <button onClick={handleLogoutClick}>Logout</button>
               </div>
             </div>
           </div>
@@ -86,9 +99,31 @@ const AdminLayout = () => {
 
         {/* Content Area */}
         <div className="content-area">
-          <Outlet /> {/* Content will change based on the route */}
+          <Outlet />
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            {loggingOut ? (
+              <div className="logging-out">
+                <div className="spinner"></div>
+                <p>Logging out...</p>
+              </div>
+            ) : (
+              <>
+                <p>Are you sure you want to logout?</p>
+                <div className="modal-buttons">
+                  <button className="confirm" onClick={confirmLogout}>Yes</button>
+                  <button className="cancel" onClick={cancelLogout}>No</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
