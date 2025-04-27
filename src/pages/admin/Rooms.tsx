@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabaseClient'; // adjust the path if needed
 import './rooms.css';
 
 type RoomStatus = 'Ongoing' | 'Available';
@@ -13,25 +14,7 @@ type Room = {
 };
 
 const Rooms = () => {
-  const [rooms, setRooms] = useState<Room[]>([
-    {
-      id: 1,
-      name: 'Room 101',
-      status: 'Ongoing',
-      time: '08:00 - 09:30',
-      professor: 'Dr. Alice Smith',
-      className: 'Computer Science 101',
-    },
-    {
-      id: 2,
-      name: 'Room 102',
-      status: 'Available',
-      time: '',
-      professor: '',
-      className: '',
-    },
-  ]);
-
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [filter, setFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'Add' | 'Edit'>('Add');
@@ -45,8 +28,36 @@ const Rooms = () => {
   });
   const [successMessage, setSuccessMessage] = useState('');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [startTime, setStartTime] = useState('08:00');
+  const [endTime, setEndTime] = useState('09:30');
 
-  // Function to open Add Modal
+  // Fetch rooms from Supabase
+  const fetchRooms = async () => {
+    const { data, error } = await supabase.from('rooms').select('*');
+    if (error) {
+      console.error('Error fetching rooms:', error.message);
+    } else {
+      const mappedRooms = data.map((room) => ({
+        id: room.id,
+        name: room.name || '',
+        status: (room.status as RoomStatus) || 'Available',
+        time: room.time || '',
+        professor: room.professor || '',
+        className: room.class_name || '',
+      }));
+      setRooms(mappedRooms);
+    }
+  };
+
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  const updateTimeField = () => {
+    const newTime = `${startTime} - ${endTime}`;
+    setCurrentRoom((prev) => ({ ...prev, time: newTime }));
+  };
+
   const openAddModal = () => {
     setIsModalOpen(false);
     setTimeout(() => {
@@ -59,65 +70,94 @@ const Rooms = () => {
         professor: '',
         className: '',
       });
+      setStartTime('08:00');
+      setEndTime('09:30');
       setIsModalOpen(true);
     }, 100);
   };
 
-  // Function to open Edit Modal
   const openEditModal = (room: Room) => {
     setIsModalOpen(false);
     setTimeout(() => {
       setModalMode('Edit');
       setCurrentRoom(room);
+
+      const [start, end] = room.time.split(' - ');
+      if (start && end) {
+        setStartTime(start);
+        setEndTime(end);
+      } else {
+        setStartTime('08:00');
+        setEndTime('09:30');
+      }
       setIsModalOpen(true);
     }, 100);
   };
 
-  // Function to handle Save or Update
-  const handleSave = () => {
+  const handleSave = async () => {
+    updateTimeField();
     if (currentRoom.name.trim() === '') return;
 
     if (modalMode === 'Add') {
-      const newRoom: Room = { ...currentRoom, id: Date.now() };
-      setRooms((prevRooms) => [...prevRooms, newRoom]);
-      setSuccessMessage('✅ Room added successfully!');
+      const {  error } = await supabase.from('rooms').insert([
+        {
+          name: currentRoom.name,
+          status: currentRoom.status,
+          time: `${startTime} - ${endTime}`,
+          professor: currentRoom.professor,
+          class_name: currentRoom.className,
+        },
+      ]);
+
+      if (error) {
+        console.error('Error adding room:', error.message);
+      } else {
+        setSuccessMessage('✅ Room added successfully!');
+        fetchRooms();
+      }
     } else {
-      setRooms((prevRooms) =>
-        prevRooms.map((room) =>
-          room.id === currentRoom.id ? currentRoom : room
-        )
-      );
-      setSuccessMessage('✅ Room updated successfully!');
+      const {  error } = await supabase.from('rooms').update({
+        name: currentRoom.name,
+        status: currentRoom.status,
+        time: `${startTime} - ${endTime}`,
+        professor: currentRoom.professor,
+        class_name: currentRoom.className,
+      }).eq('id', currentRoom.id);
+
+      if (error) {
+        console.error('Error updating room:', error.message);
+      } else {
+        setSuccessMessage('✅ Room updated successfully!');
+        fetchRooms();
+      }
     }
 
     setIsModalOpen(false);
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
-  // Function to open delete confirmation modal
   const openDeleteModal = (roomId: number) => {
     setIsDeleteModalOpen(true);
-    setCurrentRoom(rooms.find(room => room.id === roomId) || {
-      id: 0,
-      name: '',
-      status: 'Available',
-      time: '',
-      professor: '',
-      className: '',
-    });
-  };
-
-  // Function to handle Delete
-  const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this room?')) {
-      setRooms((prevRooms) => prevRooms.filter((room) => room.id !== currentRoom.id));
-      setSuccessMessage('🗑️ Room deleted successfully!');
-      setIsDeleteModalOpen(false);
-      setTimeout(() => setSuccessMessage(''), 3000);
+    const room = rooms.find((r) => r.id === roomId);
+    if (room) {
+      setCurrentRoom(room);
     }
   };
 
-  // Filter rooms based on search input
+  const handleDelete = async () => {
+    const { error } = await supabase.from('rooms').delete().eq('id', currentRoom.id);
+
+    if (error) {
+      console.error('Error deleting room:', error.message);
+    } else {
+      setSuccessMessage('🗑️ Room deleted successfully!');
+      fetchRooms();
+    }
+
+    setIsDeleteModalOpen(false);
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
   const filteredRooms = rooms.filter((room) =>
     room.name.toLowerCase().includes(filter.toLowerCase())
   );
@@ -148,20 +188,16 @@ const Rooms = () => {
             <div key={room.id} className="room-card">
               <div className="room-title">
                 <h3>{room.name}</h3>
-                <span
-                  className={`status-badge ${room.status === 'Ongoing' ? 'ongoing' : 'available'}`}
-                >
+                <span className={`status-badge ${room.status === 'Ongoing' ? 'ongoing' : 'available'}`}>
                   {room.status}
                 </span>
               </div>
 
-              {room.status === 'Ongoing' && (
-                <div className="room-details">
-                  <p>⏰ Time: {room.time}</p>
-                  <p>👨‍🏫 Professor: {room.professor}</p>
-                  <p>📘 Class: {room.className}</p>
-                </div>
-              )}
+              <div className="room-details">
+                <p>⏰ Time: {room.time || 'N/A'}</p>
+                <p>👨‍🏫 Professor: {room.professor || 'N/A'}</p>
+                <p>📘 Class: {room.className || 'N/A'}</p>
+              </div>
 
               <div className="room-actions">
                 <button className="edit-btn" onClick={() => openEditModal(room)}>
@@ -197,49 +233,49 @@ const Rooms = () => {
               type="text"
               placeholder="Room Name"
               value={currentRoom.name}
-              onChange={(e) =>
-                setCurrentRoom({ ...currentRoom, name: e.target.value })
-              }
+              onChange={(e) => setCurrentRoom({ ...currentRoom, name: e.target.value })}
+            />
+
+            <div className="time-picker-row">
+              <div className="time-input">
+                <label>Start Time:</label>
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                />
+              </div>
+              <div className="time-input">
+                <label>End Time:</label>
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Professor Name"
+              value={currentRoom.professor}
+              onChange={(e) => setCurrentRoom({ ...currentRoom, professor: e.target.value })}
+            />
+
+            <input
+              type="text"
+              placeholder="Class Name"
+              value={currentRoom.className}
+              onChange={(e) => setCurrentRoom({ ...currentRoom, className: e.target.value })}
             />
 
             <select
               value={currentRoom.status}
-              onChange={(e) =>
-                setCurrentRoom({ ...currentRoom, status: e.target.value as RoomStatus })
-              }
+              onChange={(e) => setCurrentRoom({ ...currentRoom, status: e.target.value as RoomStatus })}
             >
               <option value="Available">Available</option>
               <option value="Ongoing">Ongoing</option>
             </select>
-
-            {currentRoom.status === 'Ongoing' && (
-              <>
-                <input
-                  type="text"
-                  placeholder="Time (e.g., 08:00 - 09:30)"
-                  value={currentRoom.time}
-                  onChange={(e) =>
-                    setCurrentRoom({ ...currentRoom, time: e.target.value })
-                  }
-                />
-                <input
-                  type="text"
-                  placeholder="Professor Name"
-                  value={currentRoom.professor}
-                  onChange={(e) =>
-                    setCurrentRoom({ ...currentRoom, professor: e.target.value })
-                  }
-                />
-                <input
-                  type="text"
-                  placeholder="Class Name"
-                  value={currentRoom.className}
-                  onChange={(e) =>
-                    setCurrentRoom({ ...currentRoom, className: e.target.value })
-                  }
-                />
-              </>
-            )}
 
             <div className="modal-buttons">
               <button className="confirm-btn" onClick={handleSave}>
